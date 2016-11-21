@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>  
+    <meta charset='utf-8' />
+    <title></title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.28.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.28.0/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <style>
+        body { margin:0; padding:0; 
+            font-family: lato;}
+        #map { position:absolute; top:0; bottom:0; width:50%; }
+        #infobox { position:absolute; top:0; bottom:0; right:0; width:50%; }
+        #ladbsframe {position:absolute; width:100%; height:100%}
+        #ladbsbox {position:absolute; width:100%; height:80%; bottom:0;}
+        #info {
+            position:absolute;
+            padding: 25px;
+            background-color: rgba(255, 255, 255, .15);
+            width:100%;
+            height:20%
+        }
+        @media screen and (max-width: 40em) {
+        #info{font-size: xx-small;}
+        }
+        
+        .mapboxgl-popup {
+        max-width: 400px;
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    }
+    </style>
+</head>
+<body>
+<div id='map'></div>
+<div id='infobox'>
+    <div id="info">
+        <h1>lacity exploration 12</h1>
+        <p>This exploratory map looks at building permits and testing a script to open directly to the Los Angeles Building and Safety's Permit and Inspection Report<a href="https://github.com/cityhubla/lacity_exploration_12">GITHUB</a></p>
+        <p>made by <a href="https://twitter.com/theworksla">theworksLA</a></p>
+    </div>
+    <div id="ladbsbox"></div>
+    </div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiY3J1emluNzN2dyIsImEiOiJjaW80MHJvNzgwMWcwdmFrams0OHAxaWozIn0.6TXveIiYaYPFdf8QTO6Ssw';
+var map = new mapboxgl.Map({
+    container: 'map', // container id
+    style: 'mapbox://styles/cruzin73vw/cioaeibbi003xainhxozbxbks', //stylesheet location
+    zoom: 10, // starting zoom
+    minZoom:10,
+    hash:true
+});
+
+var colorList = [
+    [1614, 1],
+    [4132, 4],
+    [8056, 6],
+    [13919, 10],
+    [20464, 15],
+    [34615, 20]
+  ];  
+    
+var url = 'data/ladbs_permit_issued_jan2013-nov2016.geojson';
+map.on('load', function () {
+
+    map.addSource('drone', { type: 'geojson', data: url });
+    map.addLayer({
+        "id": "drone",
+        "type": "circle",
+        "source": "drone",
+                "paint": {
+                    'circle-radius': {
+                        "property": "value",
+                        "type":"interval",
+                        "stops": [
+    [10000, 4],
+    [100000, 6],
+    [1000000, 12],
+    [10000000, 15]
+  ]
+                    },
+                    'circle-color': {
+                        "property": "Permit Sub-Type",
+                        "type": "categorical",
+                        "stops": [
+                            ["1 or 2 Family Dwelling", '#f6f283'],
+                            ["Commercial", '#f17297'],
+                            ["Apartment", '#fcc285']
+                        ]
+                    },
+                    'circle-opacity': 0.8
+                }
+    });
+    
+    map.on('mousemove', function (e) {
+    var features = map.queryRenderedFeatures(e.point);
+    //console.log(features);
+});
+    
+map.on('click', function (e) {
+    var features = map.queryRenderedFeatures(e.point, { layers: ['drone'] });
+
+    if (!features.length) {
+        return;
+    }
+
+    var feature = features[0];
+    var str = feature.properties["PCIS Permit #"];
+    var res = str.split("-");
+    var popup = new mapboxgl.Popup()
+        .setLngLat(feature.geometry.coordinates)
+        .setHTML(feature.properties["PCIS Permit #"])
+        .addTo(map);
+    $("#ladbsbox").html("<iframe id='ladbsframe' src='https://www.ladbsservices2.lacity.org/OnlineServices/PermitReport/PcisPermitDetail?id1="+res[0]+"&id2="+res[1]+"&id3="+res[2]+"'></iframe>")
+});
+    
+map.on('mousemove', function (e) {
+    var features = map.queryRenderedFeatures(e.point, { layers: ['drone'] });
+    map.getCanvas().style.cursor = (features.length) ? 'pointer' : '';
+});    
+});
+</script>
+</body>
+</html>
