@@ -13,12 +13,12 @@
         #map { position:absolute; top:0; bottom:0; width:50%; }
         #infobox { position:absolute; top:0; bottom:0; right:0; width:50%; }
         #ladbsframe {position:absolute; width:100%; height:100%}
-        #ladbsbox {position:absolute; width:100%; height:80%; bottom:0;}
+        #ladbsbox {position:relative; width:99%; height:75%; bottom:0;}
         #info {
-            position:absolute;
+            position:relative;
             padding: 25px;
             background-color: rgba(255, 255, 255, .15);
-            width:100%;
+            width:90%;
             height:20%
         }
         @media screen and (max-width: 40em) {
@@ -29,15 +29,46 @@
         max-width: 400px;
         font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
     }
+        .legend {
+        background-color: #000;
+        border-radius: 3px;
+        bottom: 30px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        color:white;
+        padding: 10px;
+        position: absolute;
+        left: 10px;
+        z-index: 1;
+        }
+
+.legend h4 {
+    margin: 0 0 10px;
+}
+
+.legend div span {
+    border-radius: 50%;
+    display: inline-block;
+    height: 10px;
+    margin-right: 5px;
+    width: 10px;
+}
     </style>
 </head>
 <body>
 <div id='map'></div>
+<div id='state-legend' class='legend'>
+    <h4>Permit Type</h4>
+    <div><span style='background-color: #f6f283'></span>1 or 2 Family Dwelling</div>
+    <div><span style='background-color: #f17297'></span>Commercial</div>
+    <div><span style='background-color: #fcc285'></span>Apartment</div>
+</div>
 <div id='infobox'>
     <div id="info">
         <h1>lacity exploration 12</h1>
-        <p>This exploratory map looks at building permits and testing a script to open directly to the Los Angeles Building and Safety's Permit and Inspection Report<a href="https://github.com/cityhubla/lacity_exploration_12">GITHUB</a></p>
-        <p>made by <a href="https://twitter.com/theworksla">theworksLA</a></p>
+        <p>This exploratory map looks at building permits from Jan2013-Nov2016. Each circle represents a permit, with the circle size based on the valuation of the cost of construction. A script was made to load permit information from the Los Angeles Building and Safety's Permit and Inspection Report</p>
+        <p>Click on a circle to identify the permit and load the LADBS window | <a href="https://github.com/cityhubla/lacity_exploration_12">Code on GITHUB</a></p>
+        <p>made by <a href="https://twitter.com/theworksla">Omar Ureta</a></p>
     </div>
     <div id="ladbsbox"></div>
     </div>
@@ -51,33 +82,25 @@ var map = new mapboxgl.Map({
     hash:true
 });
 
-var colorList = [
-    [1614, 1],
-    [4132, 4],
-    [8056, 6],
-    [13919, 10],
-    [20464, 15],
-    [34615, 20]
-  ];  
-    
+
 var url = 'data/ladbs_permit_issued_jan2013-nov2016.geojson';
 map.on('load', function () {
 
-    map.addSource('drone', { type: 'geojson', data: url });
+    map.addSource('ladbspermits', { type: 'geojson', data: url });
     map.addLayer({
-        "id": "drone",
+        "id": "ladbspermits",
         "type": "circle",
-        "source": "drone",
+        "source": "ladbspermits",
                 "paint": {
                     'circle-radius': {
                         "property": "value",
                         "type":"interval",
                         "stops": [
-    [10000, 4],
-    [100000, 6],
-    [1000000, 12],
-    [10000000, 15]
-  ]
+                            [10000, 4],
+                            [100000, 6],
+                            [1000000, 12],
+                            [10000000, 15]
+                          ]
                     },
                     'circle-color': {
                         "property": "Permit Sub-Type",
@@ -88,7 +111,14 @@ map.on('load', function () {
                             ["Apartment", '#fcc285']
                         ]
                     },
-                    'circle-opacity': 0.8
+                    'circle-opacity':  {                        
+                        "property": "Permit Sub-Type",
+                        "type": "categorical",
+                        "stops":[
+                            ["1 or 2 Family Dwelling", .2],
+                            ["Commercial", .6],
+                            ["Apartment", .6]
+                        ]}
                 }
     });
     
@@ -98,24 +128,35 @@ map.on('load', function () {
 });
     
 map.on('click', function (e) {
-    var features = map.queryRenderedFeatures(e.point, { layers: ['drone'] });
+    var features = map.queryRenderedFeatures(e.point, { layers: ['ladbspermits'] });
 
     if (!features.length) {
         return;
     }
-
+    console.log(map.getSource("ladbspermits"));
     var feature = features[0];
     var str = feature.properties["PCIS Permit #"];
     var res = str.split("-");
+    var date = new Date(feature.properties["Issue Date"]);
+    console.log(date);
+    var areasf = feature.properties["Floor Area-L.A. Building Code Definition"].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     var popup = new mapboxgl.Popup()
         .setLngLat(feature.geometry.coordinates)
-        .setHTML(feature.properties["PCIS Permit #"])
+        .setHTML(
+            "<h2>"+feature.properties["Permit Sub-Type"]+"</h2>"+
+            "<p>"+feature.properties["Address Start"]+" "+feature.properties["Street Name"]+" "+feature.properties["Street Suffix"]+"</p>"+
+            "<b>Valuation: </b>"+feature.properties["Valuation"]+
+            "<br><b>Council District: </b>"+feature.properties["Council District"]+
+            "<br><b>Zone: </b>"+feature.properties["Zone"]+
+            "<br><b>Building Area (In Square Feet): </b>"+areasf+" SF"
+        
+        )
         .addTo(map);
     $("#ladbsbox").html("<iframe id='ladbsframe' src='https://www.ladbsservices2.lacity.org/OnlineServices/PermitReport/PcisPermitDetail?id1="+res[0]+"&id2="+res[1]+"&id3="+res[2]+"'></iframe>")
 });
     
 map.on('mousemove', function (e) {
-    var features = map.queryRenderedFeatures(e.point, { layers: ['drone'] });
+    var features = map.queryRenderedFeatures(e.point, { layers: ['ladbspermits'] });
     map.getCanvas().style.cursor = (features.length) ? 'pointer' : '';
 });    
 });
