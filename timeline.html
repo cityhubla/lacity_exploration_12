@@ -5,9 +5,11 @@
   <div id="graph"></div>
 </body>
 <script>
-var rawDataURL = 'data/ladbs_permits.csv';
+var rawDataURL = 'data/ladbs_permits_1.csv';
 var xField = 'Issue Date';
-var yField = 'Permit Sub-Type';
+var yField = '# of Residential Dwelling Units';
+var sizeField = 'Valuation';
+var typeField = 'Permit Sub-Type'
 
 var selectorOptions = {
     buttons: [{
@@ -37,17 +39,20 @@ var selectorOptions = {
 
 Plotly.d3.csv(rawDataURL, function(err, rawData) {
     if(err) throw err;
-    console.log(rawData)
     var data = prepData(rawData);
     var layout = {
-        title: 'Time series with range slider and selectors',
-        xaxis: {
-            rangeselector: selectorOptions,
-            rangeslider: {}
+        title: 'Building Permit Types by Valuation',
+        height: 800,
+        width: 1800,
+        margin: {t: -20},
+        xaxis:{
+        title:"Date Permits Issued"
+        },        
+        yaxis:{
+        title:"Number of Residential Units"
         },
-        yaxis: {
-            fixedrange: true
-        }
+        hovermode: 'closest',
+        showlegend: true
     };
 
     Plotly.plot('graph', data, layout);
@@ -57,16 +62,37 @@ Plotly.d3.csv(rawDataURL, function(err, rawData) {
 function prepData(rawData) {
     var x = [];
     var y = [];
-
+    var size = [];
+    var color = [];
+    var text = [];
+    
     rawData.forEach(function(datum, i) {
-
+        var currencyreplace = Number(datum[sizeField].replace(/[^0-9\.]+/g,""))*.01;
+        if (datum[typeField]=="Commercial"){
+        color.push('#f17297')
+        } else if (datum[typeField]=="Apartment"){
+        color.push('#fcc285')
+        } else {color.push('#f6f283')}
+            
         x.push(new Date(datum[xField]));
         y.push(datum[yField]);
+        size.push(currencyreplace);
+        text.push(datum[typeField])
     });
 
     return [{
         mode: 'markers',
-        type:'scatter',
+        text: text,
+        marker:{
+            size:size,
+            sizeref: 100,
+            sizemode: 'area',
+            opacity:.25,
+            color:color,
+            line:{
+            color:'#000'
+            }
+        },
         x: x,
         y: y
     }];
