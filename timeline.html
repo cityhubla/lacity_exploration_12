@@ -2,99 +2,64 @@
   <script src="https://cdn.plot.ly/plotly-1.8.0.min.js"></script>
 </head>
 <body>
-  <div id="graph"></div>
+  <div id="my-graph"></div>
 </body>
 <script>
-var rawDataURL = 'data/ladbs_permits_1.csv';
-var xField = 'Issue Date';
-var yField = '# of Residential Dwelling Units';
-var sizeField = 'Valuation';
-var typeField = 'Permit Sub-Type'
-
-var selectorOptions = {
-    buttons: [{
-        step: 'month',
-        stepmode: 'backward',
-        count: 1,
-        label: '1m'
-    }, {
-        step: 'month',
-        stepmode: 'backward',
-        count: 6,
-        label: '6m'
-    }, {
-        step: 'year',
-        stepmode: 'todate',
-        count: 1,
-        label: 'YTD'
-    }, {
-        step: 'year',
-        stepmode: 'backward',
-        count: 1,
-        label: '1y'
-    }, {
-        step: 'all',
-    }],
-};
-
-Plotly.d3.csv(rawDataURL, function(err, rawData) {
-    if(err) throw err;
-    var data = prepData(rawData);
-    var layout = {
-        title: 'Building Permit Types by Valuation',
-        height: 800,
-        width: 1800,
-        margin: {t: -20},
-        xaxis:{
-        title:"Date Permits Issued"
-        },        
-        yaxis:{
-        title:"Number of Residential Units"
-        },
-        hovermode: 'closest',
-        showlegend: true
-    };
-
-    Plotly.plot('graph', data, layout);
-
-});
-
-function prepData(rawData) {
-    var x = [];
-    var y = [];
-    var size = [];
-    var color = [];
-    var text = [];
-    
-    rawData.forEach(function(datum, i) {
-        var currencyreplace = Number(datum[sizeField].replace(/[^0-9\.]+/g,""))*.01;
-        if (datum[typeField]=="Commercial"){
-        color.push('#f17297')
-        } else if (datum[typeField]=="Apartment"){
-        color.push('#fcc285')
-        } else {color.push('#f6f283')}
-            
-        x.push(new Date(datum[xField]));
-        y.push(datum[yField]);
-        size.push(currencyreplace);
-        text.push(datum[typeField])
-    });
-
-    return [{
-        mode: 'markers',
-        text: text,
-        marker:{
-            size:size,
-            sizeref: 100,
-            sizemode: 'area',
-            opacity:.25,
-            color:color,
-            line:{
-            color:'#000'
-            }
-        },
-        x: x,
-        y: y
-    }];
+Plotly.d3.csv('data/ladbs_permits_1.csv', function(err, rows){
+var permit = ['Commercial', 'Apartment', '1 or 2 Family Dwelling'];
+var colors = ['#f17297','#fcc285','#f6f283'];
+function unpack(rows, key) {  
+  return rows.map(function(row) {return row[key]; });
 }
+
+//Returns converted Date    
+function unpackdate(rows, key) {  
+  return rows.map(function(row) {return new Date(row[key]); });
+}
+    
+//Returns converted currancy    
+function unpackcurrancy(rows, key) {  
+  return rows.map(function(row) {return Number(row[key].replace(/[^0-9\.]+/g,""))*.01 });
+}    
+
+//Select matching colors for each type    
+function color(c) {
+   		return 	c == 'Commercial' ? '#f17297' :
+				c == 'Apartment'  ? '#fcc285' :			
+						 '#f6f283';
+}    
+
+var data = permit.map(function(permit_type) {
+  var rowsFiltered = rows.filter(function(row) {
+      return (row['Permit Sub-Type'] === permit_type);
+  });
+
+  return {
+      mode: 'markers',
+      name: permit_type,
+      x: unpackdate(rowsFiltered, 'Issue Date'),
+      y: unpack(rowsFiltered, '# of Residential Dwelling Units'),
+      text: unpack(rowsFiltered, 'Valuation'),
+      marker: {
+          sizemode: 'area',
+          size:unpackcurrancy(rowsFiltered, 'Valuation'),
+          sizeref: 100,
+          color: color(permit_type),
+          opacity:.35,
+          line:{
+              color:'#000'
+          }
+      }
+  };
+});
+var layout = {
+    title: 'LADBS Permits "Issued" 2013-2016 | Source: data.lacity.org',
+    xaxis: {title: 'Date Issued', },
+    yaxis: {title: '# Residential Units',fixedrange: true},
+    margin: {b: -20},
+    height:600,
+    hovermode: 'closest'
+};
+Plotly.plot('my-graph', data, layout, {showLink: false});
+});
 </script>
