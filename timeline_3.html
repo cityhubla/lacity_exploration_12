@@ -1,0 +1,100 @@
+<head>
+  <script src="https://cdn.plot.ly/plotly-1.8.0.min.js"></script>
+</head>
+<body>
+  <div id="graph"></div>
+</body>
+<script>
+var rawDataURL = 'data/ladbs_permits_1.csv';
+var xField = 'Issue Date';
+var yField = '# of Residential Dwelling Units';
+var sizeField = 'Valuation';
+var typeField = 'Permit Sub-Type'
+
+var selectorOptions = {
+    buttons: [{
+        step: 'month',
+        stepmode: 'backward',
+        count: 1,
+        label: '1m'
+    }, {
+        step: 'month',
+        stepmode: 'backward',
+        count: 6,
+        label: '6m'
+    }, {
+        step: 'year',
+        stepmode: 'todate',
+        count: 1,
+        label: 'YTD'
+    }, {
+        step: 'year',
+        stepmode: 'backward',
+        count: 1,
+        label: '1y'
+    }, {
+        step: 'all',
+    }],
+};
+
+Plotly.d3.csv(rawDataURL, function(err, rawData) {
+    if(err) throw err;
+    var data = prepData(rawData);
+    var layout = {
+        title: 'Building Permit Types by Valuation',
+        height: 800,
+        width: 1800,
+        margin: {t: -20},
+        xaxis:{
+        title:"Date Permits Issued"
+        },        
+        yaxis:{
+        title:"Number of Residential Units"
+        },
+        hovermode: 'closest',
+        showlegend: true
+    };
+
+    Plotly.plot('graph', data, layout);
+
+});
+
+function prepData(rawData) {
+    var x = [];
+    var y = [];
+    var size = [];
+    var color = [];
+    var text = [];
+    
+    rawData.forEach(function(datum, i) {
+        var currencyreplace = Number(datum[sizeField].replace(/[^0-9\.]+/g,""))*.01;
+        if (datum[typeField]=="Commercial"){
+        color.push('#f17297')
+        } else if (datum[typeField]=="Apartment"){
+        color.push('#fcc285')
+        } else {color.push('#f6f283')}
+            
+        x.push(new Date(datum[xField]));
+        y.push(datum[yField]);
+        size.push(currencyreplace);
+        text.push(datum[typeField])
+    });
+
+    return [{
+        mode: 'markers',
+        text: text,
+        marker:{
+            size:size,
+            sizeref: 100,
+            sizemode: 'area',
+            opacity:.25,
+            color:color,
+            line:{
+            color:'#000'
+            }
+        },
+        x: x,
+        y: y
+    }];
+}
+</script>
