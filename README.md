@@ -1,4 +1,6 @@
 # LA City Exploration 12
+![Image 1](lacity12.PNG)
+
 Mapping Issued Building Permits from 2013-16 and directly loading LADBS permit report information.
 
 ### [LIVE MAP](https://cityhubla.github.io/lacity_exploration_12/#12.38/34.0644/-118.2724)
@@ -28,6 +30,8 @@ Typically the website is used by customers for
 
 ## Visualizing with [plotly.js](https://plot.ly/javascript/) | open source JavaScript graphing library like D3
 * An interactive graph was made to test the capabilities of the plotly.js graphing library
+
+![Image 1](plotly.PNG)
 
 ## [Live graph](https://cityhubla.github.io/lacity_exploration_12/timeline_3.html)
 
