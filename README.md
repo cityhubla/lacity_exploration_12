@@ -26,5 +26,10 @@ Typically the website is used by customers for
 * Webpage for map was split into two panes for map on left and a iframe to load the LADBS Permit and Inspection Report
 * The `Permit Number` attribute is pulled when a user clicks on a marker for JQuery to load ladbs report on that case number.
 
+## Visualizing with [plotly.js](https://plot.ly/javascript/) | open source JavaScript graphing library like D3
+* An interactive graph was made to test the capabilities of the plotly.js graphing library
+
+## [Live graph](https://cityhubla.github.io/lacity_exploration_12/timeline_3.html)
+
 ## Data Inquiries and Comments from Exploration
 Pending
