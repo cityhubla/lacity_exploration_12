@@ -13,9 +13,9 @@
         #map { position:absolute; top:0; bottom:0; width:50%; }
         #infobox { position:absolute; top:0; bottom:0; right:0; width:50%; }
         #ladbsframe {position:absolute; width:100%; height:100%}
-        #ladbsbox {position:relative; width:99%; height:75%; bottom:0;}
+        #ladbsbox {position:absolute; width:99%; height:65%; bottom:0;}
         #info {
-            position:relative;
+            position:absolute;
             padding: 25px;
             background-color: rgba(255, 255, 255, .15);
             width:90%;
@@ -53,6 +53,37 @@
     margin-right: 5px;
     width: 10px;
 }
+        
+        .button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+        
+.button5 {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+}
+
+.button5:hover {
+    background-color: #555555;
+    color: white;
+}
+        
+.active {
+    background-color: #555555;
+    color: white;
+}          
     </style>
 </head>
 <body>
@@ -66,9 +97,13 @@
 <div id='infobox'>
     <div id="info">
         <h1>lacity exploration 12</h1>
-        <p>This exploratory map looks at building permits from Jan2013-Nov2016. Each circle represents a permit, with the circle size based on the valuation of the cost of construction. A script was made to load permit information from the Los Angeles Building and Safety's Permit and Inspection Report</p>
+        <p>This exploratory map looks at building permits from Jan2018-September2018. Each circle represents a permit, with the circle size based on the valuation of the cost of construction. A script was made to load permit information from the Los Angeles Building and Safety's Permit and Inspection Report</p>
         <p>Click on a circle to identify the permit and load the LADBS window | <a href="https://github.com/cityhubla/lacity_exploration_12">Code on GITHUB</a></p>
         <p>made by <a href="https://twitter.com/theworksla">Omar Ureta</a></p>
+        <button class="button button5 active" id='Bldg-New' onclick='changelayer("Bldg-New")'>Bldg-New</button>
+        <button class="button button5" id='Bldg-Addition' onclick='changelayer("Bldg-Addition")'>Bldg-Addition</button>
+        <button class="button button5" id="Bldg-Alter/Repair" onclick='changelayer("Bldg-Alter/Repair")'>Bldg-Alter/Repair</button>
+        <button class="button button5" id='Bldg-Demolition' onclick='changelayer("Bldg-Demolition")'>Bldg-Demolition</button>
     </div>
     <div id="ladbsbox"></div>
     </div>
@@ -83,7 +118,7 @@ var map = new mapboxgl.Map({
 });
 
 
-var url = 'data/ladbs_permit_issued_jan2013-nov2016.geojson';
+var url = 'data/ladbs_permit_issued_jan2018-sept2018.geojson';
 map.on('load', function () {
 
     map.addSource('ladbspermits', { type: 'geojson', data: url });
@@ -93,7 +128,7 @@ map.on('load', function () {
         "source": "ladbspermits",
                 "paint": {
                     'circle-radius': {
-                        "property": "value",
+                        "property": "Valuation",
                         "type":"interval",
                         "stops": [
                             [10000, 4],
@@ -119,7 +154,8 @@ map.on('load', function () {
                             ["Commercial", .6],
                             ["Apartment", .6]
                         ]}
-                }
+                },
+        "filter": ["==", "Permit Type", "Bldg-New"]
     });
     
     map.on('mousemove', function (e) {
@@ -160,6 +196,18 @@ map.on('mousemove', function (e) {
     map.getCanvas().style.cursor = (features.length) ? 'pointer' : '';
 });    
 });
+
+$( ".button" ).click(function() {
+    var layer = $(this).attr('id')
+    map.setFilter('ladbspermits', ["==", "Permit Type", layer]);
+    $(".active").removeClass('active');
+    $(this).addClass('active');
+});    
+    
+var changelayer = function(layer){
+
+    console.log("yo")
+}
 </script>
 </body>
 </html>
